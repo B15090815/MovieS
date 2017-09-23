@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Sep 21 22:05:24 2017
-
+爬取6v电影网全部喜剧电影的第一层连接，并保存为txt格式的文档
+其中的 CrawIP.bi 文件需要先运行IPpool进行爬去才能使用
 @author: 陈仁祥
 """
 #from bs4 import BeautifulSoup
@@ -40,46 +41,57 @@ def Crawhtml(IPpool,User_agent_list,url):
         return False
         
 
-#fp_IP = open("./IPpool.txt","rb")
-#IPpool = pickle.load(fp_IP)
-#fp_IP.close()
+fp_IP = open("./CrawIP.bi","rb")
+IPpool = pickle.load(fp_IP)
+fp_IP.close()
 
 fp_user = open('./user_agent.bi','rb')
 User_agent_list = pickle.load(fp_user)
 fp_user.close()
 
-proxy = '183.157.181.186:80'
-proxies = {'http':'http://'+proxy,'https':'https://'+proxy}
 
 url_root = "http://www.6vhao.tv"
-index = "/dy1/"
-#print(url_root+index)
-#url_links = []
-fp_links = open("./url_links.txt","w")
-for i in range(10):
-    i = i + 1
-    print("正在爬去第%d个...."%(i))
-    if i==1:
-        url = url_root + index
+index = "dy1"
+
+url_links =[]
+for i in range(153): #153
+    if bool(IPpool):
+        i = i + 1
+        print("正在爬取第%d个...."%(i))
+        if i==1:
+            url = url_root + r'/'+ index + r'/'
+        else:
+            url = url_root + r'/'+index + r'/' + 'index_' + str(i) + '.html'
+            
+        while bool(IPpool):
+            user_agent = random.choice(User_agent_list)
+            headers = {'User-Agent':user_agent}
+            proxy = random.choice(IPpool)
+            proxies = {'http':'http://'+proxy,'https':'https://'+proxy}
+            try:
+                r = requests.get(url,headers=headers,proxies=proxies,timeout=2)
+                r.encoding = chardet.detect(r.content)['encoding']
+                html = etree.HTML(r.text)
+                link = html.xpath("//div[@class='listBox']/ul/li/div[@class='listimg']/a/@href")
+                url_links.append(link)
+                break
+            except:
+                IPpool.remove(proxy)
+                print('Conection failed...')
+        time.sleep(1)
     else:
-        url = url_root + index + 'index_' + str(i) + '.html'
-        
-#    content = Crawhtml(IPpool,User_agent_list,url)
-#    while not content:
-#        content = Crawhtml(IPpool,User_agent_list,url)
-#    html = etree.HTML(content)
-    user_agent = random.choice(User_agent_list)
-    headers = {'User-Agent':user_agent}  
-    r = requests.get(url,headers=headers,proxies=proxies)
-    r.encoding = chardet.detect(r.content)['encoding']
-    html = etree.HTML(r.text)
-    for item in html.xpath("//div[@class='listBox']/ul/li/div[@class='listimg']/a/@href"):
-        item = item + '\n'
-        fp_links.write(item)
-#        url_links.append(item)
-    time.sleep(5)
-fp_links.close()
-print("It'ok!")
+        break
+               
+print("成功爬取%d条页面!"%i)
+postfix = '.txt'
+filename = './links_' + index + postfix
+fp_link = open(filename,'w')
+for each in url_links:
+    for link in each:
+        fp_link.write(link+'\n')
+fp_link.close()
+
+print("It's finished...")
 
 
 
