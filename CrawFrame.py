@@ -71,13 +71,15 @@ class Htmldownloader(object):
                 r = requests.get(url,headers=headers,proxies=proxies,timeout=2)
                 if r.status_code == 200:
                     r.encoding = chardet.detect(r.content)['encoding']
+                    print('Success')
                     return r.text
                 else:
                     
                     return None
             except:
-                print('connection failed...')
+#                print('connection failed...')
                 IPpool.remove(proxy)
+        print("Failed")
         return None
 
 
@@ -108,7 +110,7 @@ class HtmlParser(object):
         new_data = {}
         source = soup.xpath("//div[@id='text']")[0]
         img = source.xpath('./p[1]/img/@src')
-        href = source.xpath('./table/tbody/tr/td/a/@href')
+        href = source.xpath('.//table/tbody/tr/td/a/@href')
         title = soup.xpath('//div[@class="contentinfo"]/h1/a/text()')
         if title:
             title = title[0]
@@ -156,7 +158,7 @@ class SpiderMan(object):
         elif tp==2:
             k = 1;
             while self.manager.has_new_url():
-                print("Woorking on num %d..."%k)
+                print("Woorking on num %d..."%k,end='')
                 k = k+1
                 url = self.manager.get_new_url()
                 html = self.downloader.download(url)
@@ -177,9 +179,10 @@ if __name__ == '__main__':
     url_root = "http://www.6vhao.tv"  
     index = "dy1"
     all_link = set()
+    print("第一层爬取开始...")
     for i in range(1): #153
         i = i + 1
-        print("正在爬取第%d个...."%(i))
+        print("正在爬取第%d个...."%(i),end='')
         if i==1:
             url = url_root + r'/'+ index + r'/'
         else:
